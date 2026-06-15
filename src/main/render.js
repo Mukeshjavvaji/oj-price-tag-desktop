@@ -91,8 +91,8 @@ async function renderPrintHTML(payload) {
     </div>`;
 
   // --- Tail Tag (100x15mm, 1-up): MRP | OJ | QR | vertical SKU | logo, then blank tail ---
-  const renderTailTag = (p) => `
-    <div class="tail-tag">
+  const renderTailTag = (p, rotated) => `
+    <div class="tail-tag${rotated ? ' rotated' : ''}">
       <div class="tail-block tail-mrp">
         <div class="tail-label">MRP</div>
         <div class="tail-value mrp">${rupees(p.compareAtPrice || p.price)}</div>
@@ -107,9 +107,10 @@ async function renderPrintHTML(payload) {
     </div>`;
 
   // A print run is a single layout (enforced in the UI), so page geometry follows the mode.
-  const pageH = mode === 'tail' ? 15 : 25;
-  const body = mode === 'tail'
-    ? expanded.map(p => `<div class="tail-row">${renderTailTag(p)}</div>`).join('')
+  const isTail = mode === 'tail' || mode === 'tail-rotated';
+  const pageH = isTail ? 15 : 25;
+  const body = isTail
+    ? expanded.map(p => `<div class="tail-row">${renderTailTag(p, mode === 'tail-rotated')}</div>`).join('')
     : pairs.map(pair => `<div class="tag-pair">${pair.map(renderBoxTag).join('')}</div>`).join('');
 
   return `
@@ -173,6 +174,7 @@ async function renderPrintHTML(payload) {
     .tail-row { width: 100mm; height: 15mm; page-break-after: always; }
     .tail-row:last-child { page-break-after: auto; }
     .tail-tag { width: 100mm; height: 15mm; display: flex; align-items: flex-start; background: white; }
+    .tail-tag.rotated { transform: rotate(180deg); }
     .tail-block {
       height: 100%; padding: 0 1.5mm;
       display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;

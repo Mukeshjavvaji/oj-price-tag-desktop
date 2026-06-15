@@ -370,13 +370,15 @@ function updateLayoutWarning() {
     strip.hidden = true;
     return;
   }
-  const conflict = [...state.selection.values()].some(s => designOf(s.tags) !== state.layoutMode);
+  // Box vs Tail family — 'tail' and 'tail-rotated' are both the tail design.
+  const family = state.layoutMode === 'box' ? 'box' : 'tail';
+  const conflict = [...state.selection.values()].some(s => designOf(s.tags) !== family);
   if (!conflict) {
     strip.hidden = true;
     return;
   }
-  const cur = state.layoutMode === 'tail' ? 'Tail Tag' : 'Box Tag';
-  const other = state.layoutMode === 'tail' ? 'Box Tag' : 'Tail Tag';
+  const cur = family === 'tail' ? 'Tail Tag' : 'Box Tag';
+  const other = family === 'tail' ? 'Box Tag' : 'Tail Tag';
   strip.textContent = `⚠ Selection mixes designs: some products are ${other} but the Layout is set to ${cur}. A print run supports only one layout — deselect the mismatched products, or print them as a separate run.`;
   strip.hidden = false;
 }
