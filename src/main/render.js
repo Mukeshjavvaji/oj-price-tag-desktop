@@ -36,6 +36,10 @@ async function renderPrintHTML(payload) {
   // The renderer decides box vs tail (config-driven) and sends an explicit mode.
   const items = Array.isArray(payload) ? payload : (payload.items || []);
   const mode = Array.isArray(payload) ? 'box' : (payload.mode || 'box');
+  // Print calibration offset (mm) for the active layout.
+  const off = (Array.isArray(payload) ? null : payload.offset) || {};
+  const offX = Number(off.x) || 0;
+  const offY = Number(off.y) || 0;
 
   // One QR per unique SKU.
   const uniqueBySku = new Map();
@@ -192,6 +196,9 @@ async function renderPrintHTML(payload) {
       font-size: 6pt; font-weight: bold; letter-spacing: 0.2mm;
     }
     .tail-logo { height: 14mm; width: auto; margin-left: 2.5mm; margin-top: 1mm; }
+
+    /* Print calibration offset (mm) for the active layout. */
+    .tag-pair, .tail-row { transform: translate(${offX}mm, ${offY}mm); }
   </style>
 </head>
 <body>

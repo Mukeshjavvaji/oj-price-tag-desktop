@@ -78,6 +78,23 @@
         <div class="tailtags-options" id="tailtags-options"></div>
       </div>
 
+      <label>
+        Print offset (mm)
+        <small>Nudge the printout to re-align with the label as the printer drifts. 0 = no change; negative moves left/up.</small>
+      </label>
+      <div class="offsets">
+        <div class="offset-group">
+          <span class="offset-name">Box Tag</span>
+          <label>X<input id="box-off-x" type="number" step="0.5" value="0" /></label>
+          <label>Y<input id="box-off-y" type="number" step="0.5" value="0" /></label>
+        </div>
+        <div class="offset-group">
+          <span class="offset-name">Tail Tag</span>
+          <label>X<input id="tail-off-x" type="number" step="0.5" value="0" /></label>
+          <label>Y<input id="tail-off-y" type="number" step="0.5" value="0" /></label>
+        </div>
+      </div>
+
       <div id="creds-section" hidden>
         <hr class="settings-divider" />
         <label>

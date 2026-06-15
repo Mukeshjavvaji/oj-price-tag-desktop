@@ -242,7 +242,7 @@ dialog .error { color: var(--err); font-size: 13px; margin-top: 8px; }
 }
 .chip-x { background: none; border: none; cursor: pointer; font-size: 15px; line-height: 1; color: var(--text-muted); padding: 0; }
 .chip-x:hover { color: var(--err); }
-.tailtags-picker { border: 1px solid var(--border-input); border-radius: 6px; overflow: hidden; }
+.tailtags-picker { border: 1px solid var(--border-input); border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
 #tailtags-search {
   width: 100%; border: none; border-bottom: 1px solid var(--border-soft);
   padding: 7px 10px; font-size: 13px; background: var(--input-bg); color: var(--text); border-radius: 0;
@@ -253,6 +253,16 @@ dialog .error { color: var(--err); font-size: 13px; margin-top: 8px; }
   padding: 2px 9px; font-size: 12px; cursor: pointer; color: var(--text);
 }
 .tailtag-option:hover { border-color: var(--accent); }
+
+/* Settings: per-layout print offset */
+.offsets { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 16px; }
+.offset-group { display: flex; align-items: center; gap: 12px; }
+.offset-name { font-size: 13px; font-weight: 600; width: 64px; }
+.offset-group label { display: inline-flex; align-items: center; gap: 5px; margin: 0; font-size: 13px; font-weight: normal; }
+.offset-group input {
+  width: 58px; padding: 5px 7px; border: 1px solid var(--border-input); border-radius: 4px;
+  background: var(--input-bg); color: var(--text); font-size: 13px; text-align: center;
+}
 
 /* Settings: password-gated credentials */
 .settings-divider { border: none; border-top: 1px solid var(--border-soft); margin: 4px 0 16px; }

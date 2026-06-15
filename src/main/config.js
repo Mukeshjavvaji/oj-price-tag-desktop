@@ -12,7 +12,12 @@ const CONFIG_PATH = path.join(app.getPath('userData'), 'config.json');
 // else uses Box Tag. Editable in Settings (persisted to config.json).
 const DEFAULT_TAIL_TAGS = ['Kadas', 'Bracelets', 'Necklace', 'Chains', 'Finger Rings', 'Pendant', 'Pendant Set'];
 
-let DEFAULT_CONFIG = { shop: '', apiKey: '', apiSecret: '', tailTags: DEFAULT_TAIL_TAGS };
+let DEFAULT_CONFIG = {
+  shop: '', apiKey: '', apiSecret: '',
+  tailTags: DEFAULT_TAIL_TAGS,
+  // Print calibration nudge (mm) per layout, for printer drift over time.
+  offsets: { box: { x: 0, y: 0 }, tail: { x: 0, y: 0 } },
+};
 try {
   // Pick only the credential fields — adminPassword stays out of config.json / the renderer.
   const s = require('./secrets');

@@ -200,8 +200,11 @@ and the `query` wrapper.
   `~/Library/Application Support/Olive Print Tags/config.json` (macOS) /
   `%APPDATA%\Olive Print Tags\config.json` (Windows)
 
-Stored fields: `{ shop, apiKey, apiSecret }`. The UI **theme** preference is stored separately in
-the renderer's `localStorage` (key `theme`), not in `config.json`.
+Stored fields: `{ shop, apiKey, apiSecret, tailTags, offsets }` — where `offsets` is the per-layout
+print-calibration nudge `{ box: {x,y}, tail: {x,y} }` in mm (set in Settings → "Print offset"; tail and
+tail-rotated share the tail offset). The UI **theme** preference is stored separately in the renderer's
+`localStorage` (key `theme`), not in `config.json`. The admin password lives in `auth.json` (see auth
+section), never in `config.json`.
 
 ---
 

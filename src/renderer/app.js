@@ -12,6 +12,7 @@ const state = {
   layoutMode: 'box', // tag layout at print time: 'box' | 'tail' (auto-set on first selection)
   tailTags: [], // tags that map to Tail Tag (from config)
   tailTagsDraft: [], // working copy while the Settings modal is open
+  offsets: { box: { x: 0, y: 0 }, tail: { x: 0, y: 0 } }, // print calibration (mm)
   configured: false,
 };
 
@@ -50,6 +51,7 @@ applyTheme(localStorage.getItem('theme') || 'light');
 (async function init() {
   const cfg = await window.api.configRead();
   state.tailTags = cfg.tailTags || [];
+  if (cfg.offsets) state.offsets = cfg.offsets;
   if (!cfg.shop || !cfg.apiKey || !cfg.apiSecret) {
     openSettings({ firstRun: true });
   } else {
@@ -396,7 +398,8 @@ async function doPrint() {
       quantity: s.quantity,
     }));
   if (items.length === 0) return;
-  await window.api.print({ items, mode: state.layoutMode });
+  const offset = state.layoutMode === 'box' ? state.offsets.box : state.offsets.tail;
+  await window.api.print({ items, mode: state.layoutMode, offset });
 }
 
 // ----- Settings -----
@@ -413,6 +416,11 @@ function openSettings({ firstRun = false } = {}) {
   state.tailTagsDraft = [...(state.tailTags || [])];
   $('#tailtags-search').value = '';
   renderTailTagsUI();
+  // Populate offset inputs from current config.
+  $('#box-off-x').value = state.offsets.box.x;
+  $('#box-off-y').value = state.offsets.box.y;
+  $('#tail-off-x').value = state.offsets.tail.x;
+  $('#tail-off-y').value = state.offsets.tail.y;
   // Credentials are hidden behind the admin password — except on first run,
   // where there's nothing configured yet so we reveal them for setup.
   if (firstRun) unlockCreds(); else lockCreds();
@@ -523,8 +531,14 @@ async function saveSettings(e) {
     err.hidden = false;
     return;
   }
-  await window.api.configWrite({ shop, apiKey, apiSecret, tailTags: state.tailTagsDraft });
+  const num = (sel) => parseFloat($(sel).value) || 0;
+  const offsets = {
+    box: { x: num('#box-off-x'), y: num('#box-off-y') },
+    tail: { x: num('#tail-off-x'), y: num('#tail-off-y') },
+  };
+  await window.api.configWrite({ shop, apiKey, apiSecret, tailTags: state.tailTagsDraft, offsets });
   state.tailTags = [...state.tailTagsDraft];
+  state.offsets = offsets;
   $('#settings-modal').close();
   state.configured = true;
   await checkConnection();
