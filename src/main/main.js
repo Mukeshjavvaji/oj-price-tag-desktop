@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const config = require('./config');
 const shopify = require('./shopify');
 const { renderPrintHTML } = require('./render');
@@ -112,7 +113,10 @@ ipcMain.handle('print:open', async (_e, payload) => {
     },
   });
   previewWin.setMenuBarVisibility(false);
-  await previewWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+  // Load from a temp file (no data: URL size cap, so large print runs work).
+  const tmpPath = path.join(app.getPath('temp'), 'oj-print-preview.html');
+  fs.writeFileSync(tmpPath, html);
+  await previewWin.loadFile(tmpPath);
   previewWin.on('closed', () => { previewWin = null; });
   return { ok: true };
 });

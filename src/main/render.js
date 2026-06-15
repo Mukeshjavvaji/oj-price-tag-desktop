@@ -75,7 +75,7 @@ async function renderPrintHTML(payload) {
   const renderBoxTag = (p) => `
     <div class="price-tag box-tag">
       <div class="top-section">
-        <div class="logo-section">${boxLogo ? `<img class="tag-logo" src="${boxLogo}" alt="Olive" />` : '<div class="logo-text">Olive</div>'}</div>
+        <div class="logo-section">${boxLogo ? '<div class="tag-logo"></div>' : '<div class="logo-text">Olive</div>'}</div>
         <div class="price-section">
           <div class="price-row">
             <div class="price-label">MRP</div>
@@ -107,7 +107,7 @@ async function renderPrintHTML(payload) {
       </div>
       <div class="tail-qr">${qrBySku.get(p.sku) || ''}</div>
       <div class="tail-sku">${skuLines(p.sku)}</div>
-      ${tailLogo ? `<img class="tail-logo" src="${tailLogo}" alt="Olive" />` : '<div class="logo-text">Olive</div>'}
+      ${tailLogo ? '<div class="tail-logo"></div>' : '<div class="logo-text">Olive</div>'}
     </div>`;
 
   // A print run is a single layout (enforced in the UI), so page geometry follows the mode.
@@ -146,7 +146,8 @@ async function renderPrintHTML(payload) {
       align-items: center; justify-content: center; padding: 0.4mm;
     }
     .logo-text { font-size: 9pt; font-weight: bold; font-style: italic; }
-    .tag-logo { max-width: 100%; max-height: 19mm; object-fit: contain; }
+    /* Logo embedded once here (not per tag) so large print runs stay small. */
+    .tag-logo { width: 100%; height: 19mm; background: url('${boxLogo}') center / contain no-repeat; }
     .price-section {
       border-right: 0.3mm solid #000; display: flex;
       flex-direction: column; padding: 1mm;
@@ -195,7 +196,7 @@ async function renderPrintHTML(payload) {
       writing-mode: vertical-rl; transform: rotate(180deg);
       font-size: 6pt; font-weight: bold; letter-spacing: 0.2mm;
     }
-    .tail-logo { height: 14mm; width: auto; margin-left: 2.5mm; margin-top: 1mm; }
+    .tail-logo { width: 14mm; height: 14mm; background: url('${tailLogo}') center / contain no-repeat; margin-left: 2.5mm; margin-top: 1mm; }
 
     /* Print calibration offset (mm) for the active layout. */
     .tag-pair, .tail-row { transform: translate(${offX}mm, ${offY}mm); }
