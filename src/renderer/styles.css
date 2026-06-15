@@ -292,3 +292,4 @@ dialog .error { color: var(--err); font-size: 13px; margin-top: 8px; }
 .msg.ok { color: var(--ok); }
 
 .app-updates-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.app-version { font-size: 12px; color: var(--text-faint); }

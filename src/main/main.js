@@ -46,6 +46,8 @@ const auth = require('./auth');
 
 ipcMain.handle('config:read', () => config.read());
 
+ipcMain.handle('app:version', () => app.getVersion());
+
 ipcMain.handle('auth:unlock', (_e, password) => ({ ok: auth.verify(password) }));
 
 ipcMain.handle('auth:change', (_e, next) => ({ ok: auth.change(next) }));

@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
   configRead: () => ipcRenderer.invoke('config:read'),
+  getVersion: () => ipcRenderer.invoke('app:version'),
   unlock: (password) => ipcRenderer.invoke('auth:unlock', password),
   changePassword: (next) => ipcRenderer.invoke('auth:change', next),
   configWrite: (next) => ipcRenderer.invoke('config:write', next),

@@ -52,6 +52,7 @@ applyTheme(localStorage.getItem('theme') || 'light');
   const cfg = await window.api.configRead();
   state.tailTags = cfg.tailTags || [];
   if (cfg.offsets) state.offsets = cfg.offsets;
+  window.api.getVersion().then(v => { $('#app-version').textContent = 'v' + v; });
   if (!cfg.shop || !cfg.apiKey || !cfg.apiSecret) {
     openSettings({ firstRun: true });
   } else {
