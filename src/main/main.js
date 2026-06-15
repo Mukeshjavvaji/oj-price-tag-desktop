@@ -7,6 +7,8 @@ const { setupUpdates } = require('./update');
 
 let mainWindow;
 
+const ICON_PATH = path.join(__dirname, '..', '..', 'assets', 'logo', 'icon.png');
+
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
@@ -14,6 +16,7 @@ function createMainWindow() {
     minWidth: 800,
     minHeight: 600,
     title: 'Olive Print Tags',
+    icon: ICON_PATH,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,
@@ -25,6 +28,7 @@ function createMainWindow() {
 }
 
 app.whenReady().then(() => {
+  if (process.platform === 'darwin' && app.dock) app.dock.setIcon(ICON_PATH);
   createMainWindow();
   setupUpdates(() => mainWindow);
   app.on('activate', () => {

@@ -45,11 +45,11 @@
           ]
         }
       ],
-      "icon": "assets/logo/Logo Final.png"
+      "icon": "assets/logo/icon.png"
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/logo/Logo Final.png"
+      "icon": "assets/logo/icon.png"
     },
     "nsis": {
       "oneClick": false,
