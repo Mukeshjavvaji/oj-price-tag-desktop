@@ -1,6 +1,6 @@
 {
   "name": "oj-print-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Olive Jewellery price tag printer — desktop app",
   "main": "src/main/main.js",
   "private": true,
