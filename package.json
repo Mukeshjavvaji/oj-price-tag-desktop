@@ -29,7 +29,8 @@
       {
         "provider": "github",
         "owner": "Mukeshjavvaji",
-        "repo": "oj-price-tag-desktop"
+        "repo": "oj-price-tag-desktop",
+        "releaseType": "release"
       }
     ],
     "files": [
