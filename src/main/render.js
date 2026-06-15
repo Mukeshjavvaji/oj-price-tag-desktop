@@ -199,11 +199,62 @@ async function renderPrintHTML(payload) {
 
     /* Print calibration offset (mm) for the active layout. */
     .tag-pair, .tail-row { transform: translate(${offX}mm, ${offY}mm); }
+
+    /* On-screen preview chrome — hidden when actually printing. */
+    @media screen {
+      html, body { background: #3c3c3c; }
+      .toolbar {
+        position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px; background: #fff; border-bottom: 1px solid #ccc;
+        font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px;
+      }
+      .toolbar label { display: flex; align-items: center; gap: 6px; }
+      .toolbar select { padding: 5px 6px; max-width: 320px; }
+      .toolbar .spacer { flex: 1; }
+      .toolbar .pv-msg { color: #b32d2d; font-size: 13px; }
+      .toolbar button { padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; border: 1px solid #bbb; background: #f3f3f3; }
+      .toolbar #print { background: #ffa3bc; border-color: #ffa3bc; color: #3a1420; font-weight: 600; }
+      .pages { padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+      .pages > div { zoom: 1.8; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    }
+    @media print {
+      .toolbar { display: none; }
+      .pages { padding: 0; }
+    }
   </style>
 </head>
 <body>
-  ${body}
-  <script>window.onload = () => window.print();</script>
+  <div class="toolbar">
+    <label>Printer: <select id="printer"></select></label>
+    <span id="pv-msg" class="pv-msg"></span>
+    <span class="spacer"></span>
+    <button id="cancel">Cancel</button>
+    <button id="print">Print</button>
+  </div>
+  <div class="pages">${body}</div>
+  <script>
+    (function () {
+      var sel = document.getElementById('printer');
+      var msg = document.getElementById('pv-msg');
+      window.previewApi.getPrinters().then(function (r) {
+        var list = (r && r.printers) || [], def = (r && r.defaultPrinter) || '';
+        sel.innerHTML = list.length ? list.map(function (p) {
+          var s = (def ? p.name === def : p.isDefault) ? ' selected' : '';
+          return '<option value="' + p.name.replace(/"/g, '&quot;') + '"' + s + '>' + (p.displayName || p.name) + '</option>';
+        }).join('') : '<option value="">No printers found</option>';
+      });
+      document.getElementById('print').onclick = function () {
+        if (!sel.value) { msg.textContent = 'Select a printer'; return; }
+        this.disabled = true; msg.textContent = 'Printing…';
+        var btn = this;
+        window.previewApi.print(sel.value).then(function (r) {
+          if (r && r.ok) { window.previewApi.cancel(); }
+          else { btn.disabled = false; msg.textContent = 'Print failed: ' + ((r && r.reason) || ''); }
+        });
+      };
+      document.getElementById('cancel').onclick = function () { window.previewApi.cancel(); };
+    })();
+  </script>
 </body>
 </html>`;
 }

@@ -89,19 +89,57 @@ ipcMain.handle('shopify:filters', async () => {
   }
 });
 
+let previewWin = null;
+let previewPageSize = null; // microns, set per print run
+
 ipcMain.handle('print:open', async (_e, payload) => {
   const html = await renderPrintHTML(payload);
-  const printWindow = new BrowserWindow({
-    width: 800,
-    height: 400,
-    show: false,
+  const mode = Array.isArray(payload) ? 'box' : (payload.mode || 'box');
+  const heightMm = (mode === 'tail' || mode === 'tail-rotated') ? 15 : 25;
+  previewPageSize = { width: 100000, height: heightMm * 1000 }; // 100mm x heightMm in microns
+
+  if (previewWin && !previewWin.isDestroyed()) previewWin.close();
+  previewWin = new BrowserWindow({
+    width: 840,
+    height: 560,
     parent: mainWindow,
-    webPreferences: { contextIsolation: true },
+    title: 'Print preview',
+    icon: ICON_PATH,
+    webPreferences: {
+      preload: path.join(__dirname, '..', 'preload', 'preview-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
   });
-  await printWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
-  printWindow.webContents.on('did-finish-load', () => {
-    printWindow.show();
+  previewWin.setMenuBarVisibility(false);
+  await previewWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+  previewWin.on('closed', () => { previewWin = null; });
+  return { ok: true };
+});
+
+// List installed printers for the preview dropdown, with the remembered default.
+ipcMain.handle('print:printers', async (e) => {
+  const printers = await e.sender.getPrintersAsync();
+  const { defaultPrinter } = config.read();
+  return {
+    printers: printers.map(p => ({ name: p.name, displayName: p.displayName || p.name, isDefault: p.isDefault })),
+    defaultPrinter: defaultPrinter || '',
+  };
+});
+
+// Silent print at the exact label size to the chosen printer; remember it.
+ipcMain.handle('print:run', async (e, deviceName) => {
+  try { config.write({ ...config.read(), defaultPrinter: deviceName }); } catch { /* ignore */ }
+  return new Promise((resolve) => {
+    e.sender.print(
+      { silent: true, deviceName, pageSize: previewPageSize, margins: { marginType: 'none' }, printBackground: true },
+      (success, reason) => resolve({ ok: success, reason })
+    );
   });
-  printWindow.on('closed', () => {});
+});
+
+ipcMain.handle('print:cancel', (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (win && !win.isDestroyed()) win.close();
   return { ok: true };
 });

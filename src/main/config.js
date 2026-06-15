@@ -17,6 +17,7 @@ let DEFAULT_CONFIG = {
   tailTags: DEFAULT_TAIL_TAGS,
   // Print calibration nudge (mm) per layout, for printer drift over time.
   offsets: { box: { x: 0, y: 0 }, tail: { x: 0, y: 0 } },
+  defaultPrinter: '', // last-used printer, preselected in the print preview
 };
 try {
   // Pick only the credential fields — adminPassword stays out of config.json / the renderer.
