@@ -22,6 +22,16 @@ function rupees(v) {
   return `Rs.${Number.isFinite(n) ? Math.round(n) : v}/-`;
 }
 
+// Split a SKU into two lines (after the last hyphen, like the SVG: "OJATK-" / "0002").
+function skuLines(sku) {
+  const s = String(sku);
+  const i = s.lastIndexOf('-');
+  const [a, b] = (i > 0 && i < s.length - 1)
+    ? [s.slice(0, i + 1), s.slice(i + 1)]
+    : [s.slice(0, Math.ceil(s.length / 2)), s.slice(Math.ceil(s.length / 2))];
+  return `<span>${a}</span><span>${b}</span>`;
+}
+
 async function renderPrintHTML(payload) {
   // The renderer decides box vs tail (config-driven) and sends an explicit mode.
   const items = Array.isArray(payload) ? payload : (payload.items || []);
@@ -92,7 +102,7 @@ async function renderPrintHTML(payload) {
         <div class="tail-value">${rupees(p.price)}</div>
       </div>
       <div class="tail-qr">${qrBySku.get(p.sku) || ''}</div>
-      <div class="tail-sku">${p.sku}</div>
+      <div class="tail-sku">${skuLines(p.sku)}</div>
       ${tailLogo ? `<img class="tail-logo" src="${tailLogo}" alt="Olive" />` : '<div class="logo-text">Olive</div>'}
     </div>`;
 
@@ -162,23 +172,24 @@ async function renderPrintHTML(payload) {
     /* Tail Tag (100x15mm, 1-up): MRP | OJ | QR | vertical SKU | logo, then a blank tail. */
     .tail-row { width: 100mm; height: 15mm; page-break-after: always; }
     .tail-row:last-child { page-break-after: auto; }
-    .tail-tag { width: 100mm; height: 15mm; display: flex; align-items: center; background: white; }
+    .tail-tag { width: 100mm; height: 15mm; display: flex; align-items: flex-start; background: white; }
     .tail-block {
       height: 100%; padding: 0 1.5mm;
       display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     }
-    .tail-mrp { width: 15mm; border-right: 0.3mm solid #000; }
-    .tail-oj { width: 18mm; }
-    .tail-label { font-size: 7pt; font-weight: bold; }
-    .tail-value { font-size: 8pt; font-weight: bold; }
+    .tail-mrp { width: 16mm; border-right: 0.3mm solid #000; }
+    .tail-oj { width: 19mm; }
+    .tail-label { font-size: 8pt; font-weight: bold; }
+    .tail-value { font-size: 9pt; font-weight: bold; }
     .tail-value.mrp { font-weight: normal; }
-    .tail-qr { width: 12.5mm; height: 12.5mm; margin-left: 4mm; }
+    .tail-qr { width: 12.5mm; height: 12.5mm; margin-left: 4mm; margin-top: 1.4mm; }
     .tail-qr svg { width: 100%; height: 100%; display: block; }
-    .tail-sku {
+    .tail-sku { display: flex; flex-direction: row; gap: 0.3mm; margin-left: 1mm; margin-top: 1.4mm; }
+    .tail-sku span {
       writing-mode: vertical-rl; transform: rotate(180deg);
-      font-size: 5pt; font-weight: bold; letter-spacing: 0.2mm; margin-left: 1mm;
+      font-size: 6pt; font-weight: bold; letter-spacing: 0.2mm;
     }
-    .tail-logo { height: 12mm; width: auto; margin-left: 2.5mm; }
+    .tail-logo { height: 14mm; width: auto; margin-left: 2.5mm; margin-top: 1mm; }
   </style>
 </head>
 <body>
