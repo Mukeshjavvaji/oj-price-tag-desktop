@@ -21,7 +21,7 @@
   },
   "build": {
     "appId": "in.olivejewellery.printtags",
-    "productName": "Olive Print Tags",
+    "productName": "OJ Label Printer",
     "directories": {
       "output": "dist"
     },

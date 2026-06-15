@@ -15,7 +15,7 @@ function createMainWindow() {
     height: 760,
     minWidth: 800,
     minHeight: 600,
-    title: 'Olive Print Tags',
+    title: 'OJ Label Printer',
     icon: ICON_PATH,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),

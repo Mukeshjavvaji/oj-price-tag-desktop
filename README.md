@@ -1,4 +1,4 @@
-# Olive Print Tags — Desktop
+# OJ Label Printer — Desktop
 
 A small **Electron desktop app** for Olive Jewellery staff to print thermal price tags.
 It connects to the production Shopify store's **Admin API**, lets a non-technical user
@@ -196,9 +196,9 @@ and the `query` wrapper.
 
 - **Dev (`npm start`)**: derived from the package **`name`** →
   `~/Library/Application Support/oj-print-desktop/config.json`
-- **Packaged build**: derived from the **`productName`** ("Olive Print Tags") →
-  `~/Library/Application Support/Olive Print Tags/config.json` (macOS) /
-  `%APPDATA%\Olive Print Tags\config.json` (Windows)
+- **Packaged build**: derived from the **`productName`** ("OJ Label Printer") →
+  `~/Library/Application Support/OJ Label Printer/config.json` (macOS) /
+  `%APPDATA%\OJ Label Printer\config.json` (Windows)
 
 Stored fields: `{ shop, apiKey, apiSecret, tailTags, offsets }` — where `offsets` is the per-layout
 print-calibration nudge `{ box: {x,y}, tail: {x,y} }` in mm (set in Settings → "Print offset"; tail and
@@ -348,7 +348,7 @@ is applied before first paint (in `app.js`) to avoid a flash.
 npm run build:win        # electron-builder --win --x64, run from macOS or Windows
 ```
 
-Output: `dist/Olive Print Tags Setup 0.1.0.exe` (NSIS installer; lets the user choose the install dir
+Output: `dist/OJ Label Printer Setup 0.1.x.exe` (NSIS installer; lets the user choose the install dir
 and creates a Desktop shortcut). Copy it to the Windows machine and run.
 
 - An **unsigned** `.exe` triggers Windows SmartScreen ("unknown publisher") → **More info → Run
