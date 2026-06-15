@@ -16,6 +16,12 @@ function getLogo(file) {
   return logoCache[file];
 }
 
+// Price with no decimals, e.g. "249.00" -> "Rs.249/-".
+function rupees(v) {
+  const n = parseFloat(v);
+  return `Rs.${Number.isFinite(n) ? Math.round(n) : v}/-`;
+}
+
 async function renderPrintHTML(payload) {
   // The renderer decides box vs tail (config-driven) and sends an explicit mode.
   const items = Array.isArray(payload) ? payload : (payload.items || []);
@@ -59,11 +65,11 @@ async function renderPrintHTML(payload) {
         <div class="price-section">
           <div class="price-row">
             <div class="price-label">MRP</div>
-            <div class="price-value mrp">Rs.${p.compareAtPrice || p.price}/-</div>
+            <div class="price-value mrp">${rupees(p.compareAtPrice || p.price)}</div>
           </div>
           <div class="price-row">
             <div class="price-label">OJ Price</div>
-            <div class="price-value">Rs.${p.price}/-</div>
+            <div class="price-value">${rupees(p.price)}</div>
           </div>
         </div>
         <div class="qr-section">
@@ -79,11 +85,11 @@ async function renderPrintHTML(payload) {
     <div class="tail-tag">
       <div class="tail-block tail-mrp">
         <div class="tail-label">MRP</div>
-        <div class="tail-value mrp">Rs.${p.compareAtPrice || p.price}/-</div>
+        <div class="tail-value mrp">${rupees(p.compareAtPrice || p.price)}</div>
       </div>
       <div class="tail-block tail-oj">
         <div class="tail-label">OJ Price</div>
-        <div class="tail-value">Rs.${p.price}/-</div>
+        <div class="tail-value">${rupees(p.price)}</div>
       </div>
       <div class="tail-qr">${qrBySku.get(p.sku) || ''}</div>
       <div class="tail-sku">${p.sku}</div>
@@ -118,14 +124,14 @@ async function renderPrintHTML(payload) {
     }
     .top-section {
       display: grid; grid-template-columns: 16mm 16.4mm 16mm;
-      height: 18.4mm; border-bottom: 0.3mm solid #000;
+      height: 20mm; border-bottom: 0.3mm solid #000;
     }
     .logo-section {
       border-right: 0.3mm solid #000; display: flex;
-      align-items: center; justify-content: center; padding: 1mm;
+      align-items: center; justify-content: center; padding: 0.4mm;
     }
     .logo-text { font-size: 9pt; font-weight: bold; font-style: italic; }
-    .tag-logo { max-width: 100%; max-height: 16mm; object-fit: contain; }
+    .tag-logo { max-width: 100%; max-height: 19mm; object-fit: contain; }
     .price-section {
       border-right: 0.3mm solid #000; display: flex;
       flex-direction: column; padding: 1mm;
@@ -138,18 +144,19 @@ async function renderPrintHTML(payload) {
     .price-row:first-child { flex: 79; }
     .price-row:last-child { flex: 105; border-bottom: none; }
     .price-label { font-size: 5pt; font-weight: bold; }
-    .price-value { font-size: 8pt; font-weight: bold; }
-    .price-value.mrp { font-weight: normal; }
+    .price-row:last-child .price-label { font-size: 6.5pt; } /* OJ Price label bigger */
+    .price-value { font-size: 9pt; font-weight: bold; }
+    .price-value.mrp { font-weight: normal; font-size: 8pt; }
     .qr-section {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 1mm;
     }
     .qr-code { width: 12mm; height: 12mm; }
     .qr-code svg { width: 100%; height: 100%; display: block; }
-    .sku-text { font-size: 5pt; font-weight: bold; text-align: center; margin-top: 0.5mm; }
+    .sku-text { font-size: 6.5pt; font-weight: bold; text-align: center; margin-top: 0.5mm; }
     .bottom-section {
       flex: 1; display: flex; align-items: center;
-      justify-content: center; font-size: 6pt; letter-spacing: 0.4mm;
+      justify-content: center; font-size: 8pt; letter-spacing: 0.65mm;
     }
 
     /* Tail Tag (100x15mm, 1-up): MRP | OJ | QR | vertical SKU | logo, then a blank tail. */
