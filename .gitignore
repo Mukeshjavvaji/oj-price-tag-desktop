@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+config.json
+auth.json
+*.log
+
+# Local Shopify credentials (keep secrets.example.js tracked)
+src/main/secrets.js
+
+# Local Claude Code settings
+.claude/settings.local.json

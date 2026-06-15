@@ -1,0 +1,49 @@
+name: Release
+
+# Build + publish a Windows installer to GitHub Releases when a version tag is pushed.
+#   npm version patch   (bumps package.json + creates a git tag)
+#   git push --follow-tags
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # lets GITHUB_TOKEN create the Release
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      # secrets.js is gitignored — recreate it from repository Secrets so the
+      # published app ships with working credentials. Configure these under
+      # Settings → Secrets and variables → Actions.
+      - name: Write secrets.js
+        shell: bash
+        run: |
+          cat > src/main/secrets.js <<EOF
+          module.exports = {
+            shop: '${{ secrets.SHOPIFY_SHOP }}',
+            apiKey: '${{ secrets.SHOPIFY_API_KEY }}',
+            apiSecret: '${{ secrets.SHOPIFY_API_SECRET }}',
+            adminPassword: '${{ secrets.ADMIN_PASSWORD }}',
+            githubOwner: 'Mukeshjavvaji',
+            githubRepo: 'oj-price-tag-desktop',
+            githubToken: '${{ secrets.UPDATE_GH_TOKEN }}',
+          };
+          EOF
+
+      - name: Build & publish
+        shell: bash
+        env:
+          # electron-builder uploads the installer + latest.yml to this repo's Releases.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish:win

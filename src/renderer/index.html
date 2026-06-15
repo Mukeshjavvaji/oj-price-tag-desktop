@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+  <title>Olive Print Tags</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img id="brand-logo" class="logo-img" src="../../assets/logo/Logo%20Final.png" alt="Olive Jewellery" />
+      <span class="title">Print Tags</span>
+    </div>
+    <div class="header-actions">
+      <span id="conn-status" class="status">Connecting…</span>
+      <button id="theme-toggle" class="icon-button" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
+      <button id="open-settings" class="icon-button" title="Settings" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+  </header>
+
+  <main id="main-view">
+    <section class="search-bar">
+      <input id="search" type="search" placeholder="Search by SKU or product title…" autocomplete="off" />
+      <button id="refresh">Refresh</button>
+    </section>
+
+    <section class="filter-bar">
+      <div class="filter-dropdown" id="collection-filter">
+        <button class="filter-toggle" id="collection-toggle">Collections<span class="filter-badge" id="collection-badge" hidden></span></button>
+        <div class="filter-panel" id="collection-panel" hidden>
+          <input class="filter-search" id="collection-search" type="text" placeholder="Filter collections…" autocomplete="off" />
+          <div class="filter-options" id="collection-options"></div>
+        </div>
+      </div>
+      <div class="filter-dropdown" id="tag-filter">
+        <button class="filter-toggle" id="tag-toggle">Tags<span class="filter-badge" id="tag-badge" hidden></span></button>
+        <div class="filter-panel" id="tag-panel" hidden>
+          <input class="filter-search" id="tag-search" type="text" placeholder="Filter tags…" autocomplete="off" />
+          <div class="filter-options" id="tag-options"></div>
+        </div>
+      </div>
+      <button class="link-button" id="clear-filters" hidden>Clear filters</button>
+    </section>
+
+    <section id="product-list" class="product-list">
+      <p class="empty">Loading products…</p>
+    </section>
+
+    <div id="layout-warning" class="warning-strip" hidden></div>
+
+    <section class="footer-bar">
+      <span id="selection-summary">0 products selected · 0 tags total</span>
+      <div class="footer-actions">
+        <label class="layout-mode-label">
+          Layout
+          <select id="layout-mode">
+            <option value="box">Box Tag</option>
+            <option value="tail">Tail Tag</option>
+          </select>
+        </label>
+        <button id="print-button" disabled>Print Selected</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="settings-modal">
+    <form method="dialog" id="settings-form">
+      <h2>Settings</h2>
+      <label>
+        Tail Tag tags
+        <small>Products with any of these tags print as <b>Tail Tag</b>. Everything else uses <b>Box Tag</b>.</small>
+      </label>
+      <div class="tailtags-selected" id="tailtags-selected"></div>
+      <div class="tailtags-picker">
+        <input id="tailtags-search" type="text" placeholder="Search tags to add…" autocomplete="off" />
+        <div class="tailtags-options" id="tailtags-options"></div>
+      </div>
+
+      <div id="creds-section" hidden>
+        <hr class="settings-divider" />
+        <label>
+          Store domain
+          <input id="shop-input" type="text" placeholder="store.myshopify.com" />
+          <small>Just the *.myshopify.com domain — no protocol, no trailing slash.</small>
+        </label>
+        <label>
+          API key (Client ID)
+          <input id="apikey-input" type="text" placeholder="Client ID" />
+          <small>Dev Dashboard → your app → Settings → Credentials.</small>
+        </label>
+        <label>
+          API secret key
+          <input id="apisecret-input" type="password" placeholder="shpss_…" />
+          <small>Client secret; used to mint a fresh 24h access token automatically.</small>
+        </label>
+
+        <div class="change-pw">
+          <button type="button" id="changepw-toggle" class="link-button">Change admin password</button>
+          <div id="changepw-fields" hidden>
+            <input id="newpw" type="password" placeholder="New password" autocomplete="new-password" />
+            <input id="confirmpw" type="password" placeholder="Confirm password" autocomplete="new-password" />
+            <button type="button" id="changepw-save">Save password</button>
+            <div id="changepw-msg" class="msg" hidden></div>
+          </div>
+        </div>
+
+        <div class="app-updates">
+          <hr class="settings-divider" />
+          <div class="app-updates-row">
+            <button type="button" id="update-btn" class="link-button">Check for updates</button>
+            <button type="button" id="update-install" class="link-button" hidden>Install update</button>
+            <span id="update-status" class="update-status" hidden></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-prompt" hidden>
+        <input id="admin-password" type="password" placeholder="Admin password" autocomplete="off" />
+        <button type="button" id="admin-submit">Unlock</button>
+      </div>
+      <div id="admin-error" class="error" hidden>Incorrect password.</div>
+
+      <div id="settings-error" class="error" hidden></div>
+      <div class="actions">
+        <button type="button" id="admin-toggle" class="icon-button" title="Edit store credentials" aria-label="Edit store credentials"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+        <button type="button" id="settings-cancel">Cancel</button>
+        <button type="submit" id="settings-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
