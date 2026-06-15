@@ -642,7 +642,15 @@ async function onUpdateButton() {
   setUpdateStatus('Checking for updates…');
   $('#update-install').hidden = true;
   const r = await window.api.checkForUpdates();
-  if (!r.ok) setUpdateStatus(r.error, true);
+  if (!r.ok) {
+    const e = String(r.error || '');
+    let msg;
+    if (/not packaged/i.test(e)) msg = e;                                  // dev-mode notice
+    else if (/404|latest version|production release/i.test(e)) msg = 'No updates available.';
+    else if (/not configured/i.test(e)) msg = e;
+    else msg = 'Could not check for updates — check your connection.';
+    setUpdateStatus(msg, true);
+  }
 }
 
 function onInstallUpdate() {
