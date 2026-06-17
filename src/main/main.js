@@ -121,22 +121,34 @@ ipcMain.handle('print:open', async (_e, payload) => {
   return { ok: true };
 });
 
-// List installed printers for the preview dropdown, with the remembered default.
+// List installed printers (from the OS) for the preview dropdown, with the
+// remembered default. getPrintersAsync can return [] on the first call on
+// Windows (print backend not ready), so retry a few times.
 ipcMain.handle('print:printers', async (e) => {
-  const printers = await e.sender.getPrintersAsync();
+  let printers = [];
+  for (let i = 0; i < 6; i++) {
+    try { printers = await e.sender.getPrintersAsync(); } catch { printers = []; }
+    if (printers && printers.length) break;
+    await new Promise(r => setTimeout(r, 300));
+  }
   const { defaultPrinter } = config.read();
   return {
-    printers: printers.map(p => ({ name: p.name, displayName: p.displayName || p.name, isDefault: p.isDefault })),
+    printers: (printers || []).map(p => ({ name: p.name, displayName: p.displayName || p.name, isDefault: p.isDefault })),
     defaultPrinter: defaultPrinter || '',
   };
 });
 
-// Silent print at the exact label size to the chosen printer; remember it.
-ipcMain.handle('print:run', async (e, deviceName) => {
+// Silent print to the chosen printer + paper; remember the printer.
+ipcMain.handle('print:run', async (e, { deviceName, paper }) => {
   try { config.write({ ...config.read(), defaultPrinter: deviceName }); } catch { /* ignore */ }
+  // Map the paper choice to a print pageSize: "WxH" mm -> microns, or a named size.
+  let pageSize = previewPageSize;
+  const m = /^(\d+)x(\d+)$/.exec(paper || '');
+  if (m) pageSize = { width: Number(m[1]) * 1000, height: Number(m[2]) * 1000 };
+  else if (paper) pageSize = paper; // e.g. 'A4', 'Letter'
   return new Promise((resolve) => {
     e.sender.print(
-      { silent: true, deviceName, pageSize: previewPageSize, margins: { marginType: 'none' }, printBackground: true },
+      { silent: true, deviceName, pageSize, margins: { marginType: 'none' }, printBackground: true },
       (success, reason) => resolve({ ok: success, reason })
     );
   });

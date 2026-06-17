@@ -113,6 +113,15 @@ async function renderPrintHTML(payload) {
   // A print run is a single layout (enforced in the UI), so page geometry follows the mode.
   const isTail = mode === 'tail' || mode === 'tail-rotated';
   const pageH = isTail ? 15 : 25;
+  // Paper choices for the preview dropdown (Electron can't read the printer's
+  // list, so these are presets); default to this layout's exact label size.
+  const defaultPaper = `100x${pageH}`;
+  const paperOptionsHtml = [
+    ['100x25', '100 × 25 mm (Box)'],
+    ['100x15', '100 × 15 mm (Tail)'],
+    ['A4', 'A4'],
+    ['Letter', 'Letter'],
+  ].map(([v, l]) => `<option value="${v}"${v === defaultPaper ? ' selected' : ''}>${l}</option>`).join('');
   const body = isTail
     ? expanded.map(p => `<div class="tail-row">${renderTailTag(p, mode === 'tail-rotated')}</div>`).join('')
     : pairs.map(pair => `<div class="tag-pair">${pair.map(renderBoxTag).join('')}</div>`).join('');
@@ -229,6 +238,7 @@ async function renderPrintHTML(payload) {
 <body>
   <div class="toolbar">
     <label>Printer: <select id="printer"></select></label>
+    <label>Paper: <select id="paper">${paperOptionsHtml}</select></label>
     <span id="pv-msg" class="pv-msg"></span>
     <span class="spacer"></span>
     <button id="cancel">Cancel</button>
@@ -250,7 +260,8 @@ async function renderPrintHTML(payload) {
         if (!sel.value) { msg.textContent = 'Select a printer'; return; }
         this.disabled = true; msg.textContent = 'Printing…';
         var btn = this;
-        window.previewApi.print(sel.value).then(function (r) {
+        var paper = document.getElementById('paper').value;
+        window.previewApi.print(sel.value, paper).then(function (r) {
           if (r && r.ok) { window.previewApi.cancel(); }
           else { btn.disabled = false; msg.textContent = 'Print failed: ' + ((r && r.reason) || ''); }
         });
