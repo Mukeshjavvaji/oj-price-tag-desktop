@@ -69,7 +69,7 @@ async function renderPrintHTML(payload) {
   for (let i = 0; i < expanded.length; i += 2) pairs.push(expanded.slice(i, i + 2));
 
   const boxLogo = getLogo('Logo - Tag.png');
-  const tailLogo = getLogo('Logo - Tag.png');
+  const tailLogo = getLogo('tail-logo.png'); // ink-cropped for a bigger logo within 15mm
 
   // --- Box Tag (current production layout) ---
   const renderBoxTag = (p) => `
@@ -176,27 +176,29 @@ async function renderPrintHTML(payload) {
     }
 
     /* Tail Tag (100x15mm, 1-up): MRP | OJ | QR | vertical SKU | logo, then a blank tail. */
-    .tail-row { width: 100mm; height: 15mm; page-break-after: always; }
+    .tail-row { width: 100mm; height: 15mm; overflow: hidden; page-break-after: always; }
     .tail-row:last-child { page-break-after: auto; }
-    .tail-tag { width: 100mm; height: 15mm; display: flex; align-items: flex-start; background: white; }
+    .tail-tag { width: 100mm; height: 15mm; overflow: hidden; display: flex; align-items: center; background: white; }
     .tail-tag.rotated { transform: rotate(180deg); }
     .tail-block {
-      height: 100%; padding: 0 1.5mm;
+      height: 100%; padding: 0 0.5mm;
       display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     }
-    .tail-mrp { width: 16mm; border-right: 0.3mm solid #000; }
-    .tail-oj { width: 19mm; }
+    /* Block widths match the SVG: divider at 14.75mm, OJ to ~31.75mm. */
+    .tail-mrp { width: 14.75mm; border-right: 0.3mm solid #000; }
+    .tail-oj { width: 17mm; }
     .tail-label { font-size: 8pt; font-weight: bold; }
     .tail-value { font-size: 9pt; font-weight: bold; }
     .tail-value.mrp { font-weight: normal; }
-    .tail-qr { width: 12.5mm; height: 12.5mm; margin-left: 4mm; margin-top: 1.4mm; }
+    /* QR sits near the top (a little top padding); everything else is vertically centered. */
+    .tail-qr { width: 12.5mm; height: 12.5mm; margin-left: 5.25mm; align-self: flex-start; margin-top: 1.4mm; }
     .tail-qr svg { width: 100%; height: 100%; display: block; }
-    .tail-sku { display: flex; flex-direction: row; gap: 0.3mm; margin-left: 1mm; margin-top: 1.4mm; }
+    .tail-sku { display: flex; flex-direction: row; gap: 0.3mm; margin-left: 1mm; }
     .tail-sku span {
       writing-mode: vertical-rl; transform: rotate(180deg);
       font-size: 6pt; font-weight: bold; letter-spacing: 0.2mm;
     }
-    .tail-logo { width: 14mm; height: 14mm; background: url('${tailLogo}') center / contain no-repeat; margin-left: 2.5mm; margin-top: 1mm; }
+    .tail-logo { width: 24mm; height: 13.5mm; background: url('${tailLogo}') center / contain no-repeat; margin-left: 4mm; }
 
     /* Print calibration offset (mm) for the active layout. */
     .tag-pair, .tail-row { transform: translate(${offX}mm, ${offY}mm); }
