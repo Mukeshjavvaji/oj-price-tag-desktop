@@ -6,6 +6,7 @@ const path = require('path');
 // data URIs rather than referenced by path. Read once per file and cache.
 const logoCache = {};
 const BASE_PRINT_NUDGE_Y_MM = -2;
+const TAIL_EXTRA_NUDGE_Y_MM = 1;
 
 function getLogo(file) {
   if (file in logoCache) return logoCache[file];
@@ -40,8 +41,9 @@ async function renderPrintHTML(payload) {
   const mode = Array.isArray(payload) ? 'box' : (payload.mode || 'box');
   // Print calibration offset (mm) for the active layout.
   const off = (Array.isArray(payload) ? null : payload.offset) || {};
+  const modeIsTail = mode === 'tail' || mode === 'tail-rotated';
   const offX = Number(off.x) || 0;
-  const offY = (Number(off.y) || 0) + BASE_PRINT_NUDGE_Y_MM;
+  const offY = (Number(off.y) || 0) + BASE_PRINT_NUDGE_Y_MM + (modeIsTail ? TAIL_EXTRA_NUDGE_Y_MM : 0);
 
   // One QR per unique SKU.
   const uniqueBySku = new Map();
@@ -193,24 +195,31 @@ async function renderPrintHTML(payload) {
     .tail-tag { width: 100mm; height: 15mm; overflow: hidden; display: flex; align-items: center; background: white; }
     .tail-tag.rotated { transform: rotate(180deg); }
     .tail-block {
-      height: 100%; padding: 0 0.5mm;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      height: 15mm; padding: 0;
+      display: grid; grid-template-rows: 1fr auto auto 1fr; align-items: center; justify-items: center; text-align: center;
     }
     /* Block widths match the SVG: divider at 14.75mm, OJ to ~31.75mm. */
-    .tail-mrp { width: 14.75mm; border-right: 0.3mm solid #000; }
-    .tail-oj { width: 17mm; }
+    .tail-mrp { width: 14.75mm; border-right: 0.3mm solid #000; transform: translateX(0.6mm); }
+    .tail-oj { width: 17mm; transform: translateX(0.6mm); }
+    .tail-mrp .tail-label, .tail-mrp .tail-value { transform: translateX(-0.7mm); }
+    .tail-oj .tail-label, .tail-oj .tail-value { transform: translateX(0.7mm); }
+    .tail-label { grid-row: 2; }
+    .tail-value { grid-row: 3; }
     .tail-label { font-size: 8pt; font-weight: bold; }
     .tail-value { font-size: 9pt; font-weight: bold; }
     .tail-value.mrp { font-weight: normal; }
     /* QR sits near the top (a little top padding); everything else is vertically centered. */
-    .tail-qr { width: 12.5mm; height: 12.5mm; margin-left: 5.25mm; align-self: flex-start; margin-top: 1.4mm; }
+    .tail-qr { width: 12mm; height: 12mm; margin-left: 5.25mm; align-self: flex-start; margin-top: 1.3mm; }
     .tail-qr svg { width: 100%; height: 100%; display: block; }
-    .tail-sku { display: flex; flex-direction: row; gap: 0.3mm; margin-left: 1mm; }
+    .tail-sku {
+      height: 13.5mm; display: flex; flex-direction: row; align-items: center;
+      justify-content: center; gap: 0.3mm; margin-left: 1mm; text-align: center;
+    }
     .tail-sku span {
       writing-mode: vertical-rl; transform: rotate(180deg);
-      font-size: 6pt; font-weight: bold; letter-spacing: 0.2mm;
+      font-size: 6.5pt; font-weight: normal; letter-spacing: 0.2mm; line-height: 1;
     }
-    .tail-logo { width: 24mm; height: 13.5mm; object-fit: contain; display: block; margin-left: 4mm; }
+    .tail-logo { width: 13mm; height: 11mm; object-fit: contain; display: block; margin-left: 2mm; }
 
     /* Print calibration offset (mm) for the active layout. */
     .tag-pair, .tail-row { transform: translate(${offX}mm, ${offY}mm); }
