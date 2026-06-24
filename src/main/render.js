@@ -5,6 +5,8 @@ const path = require('path');
 // The print window loads via a data: URL, so logos must be embedded as base64
 // data URIs rather than referenced by path. Read once per file and cache.
 const logoCache = {};
+const BASE_PRINT_NUDGE_Y_MM = -2;
+
 function getLogo(file) {
   if (file in logoCache) return logoCache[file];
   try {
@@ -39,7 +41,7 @@ async function renderPrintHTML(payload) {
   // Print calibration offset (mm) for the active layout.
   const off = (Array.isArray(payload) ? null : payload.offset) || {};
   const offX = Number(off.x) || 0;
-  const offY = Number(off.y) || 0;
+  const offY = (Number(off.y) || 0) + BASE_PRINT_NUDGE_Y_MM;
 
   // One QR per unique SKU.
   const uniqueBySku = new Map();
@@ -75,7 +77,7 @@ async function renderPrintHTML(payload) {
   const renderBoxTag = (p) => `
     <div class="price-tag box-tag">
       <div class="top-section">
-        <div class="logo-section">${boxLogo ? '<div class="tag-logo"></div>' : '<div class="logo-text">Olive</div>'}</div>
+        <div class="logo-section">${boxLogo ? `<img class="tag-logo" src="${boxLogo}" alt="Olive Jewellery">` : '<div class="logo-text">Olive</div>'}</div>
         <div class="price-section">
           <div class="price-row">
             <div class="price-label">MRP</div>
@@ -107,7 +109,7 @@ async function renderPrintHTML(payload) {
       </div>
       <div class="tail-qr">${qrBySku.get(p.sku) || ''}</div>
       <div class="tail-sku">${skuLines(p.sku)}</div>
-      ${tailLogo ? '<div class="tail-logo"></div>' : '<div class="logo-text">Olive</div>'}
+      ${tailLogo ? `<img class="tail-logo" src="${tailLogo}" alt="Olive Jewellery">` : '<div class="logo-text">Olive</div>'}
     </div>`;
 
   // A print run is a single layout (enforced in the UI), so page geometry follows the mode.
@@ -136,6 +138,7 @@ async function renderPrintHTML(payload) {
     @page { size: 100mm ${pageH}mm; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    .pages { margin: 0; padding: 0; }
     /* Box Tag: two 48.4mm tags with a 3.2mm gap = 100mm row (measured from the Canva design). */
     .tag-pair {
       width: 100mm; height: 25mm;
@@ -156,7 +159,7 @@ async function renderPrintHTML(payload) {
     }
     .logo-text { font-size: 9pt; font-weight: bold; font-style: italic; }
     /* Logo embedded once here (not per tag) so large print runs stay small. */
-    .tag-logo { width: 100%; height: 19mm; background: url('${boxLogo}') center / contain no-repeat; }
+    .tag-logo { width: 100%; height: 19mm; object-fit: contain; display: block; }
     .price-section {
       border-right: 0.3mm solid #000; display: flex;
       flex-direction: column; padding: 1mm;
@@ -174,7 +177,7 @@ async function renderPrintHTML(payload) {
     .price-value.mrp { font-weight: normal; font-size: 8pt; }
     .qr-section {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 1mm;
+      justify-content: center; padding: 1mm; transform: translateY(1mm);
     }
     .qr-code { width: 12mm; height: 12mm; }
     .qr-code svg { width: 100%; height: 100%; display: block; }
@@ -207,7 +210,7 @@ async function renderPrintHTML(payload) {
       writing-mode: vertical-rl; transform: rotate(180deg);
       font-size: 6pt; font-weight: bold; letter-spacing: 0.2mm;
     }
-    .tail-logo { width: 24mm; height: 13.5mm; background: url('${tailLogo}') center / contain no-repeat; margin-left: 4mm; }
+    .tail-logo { width: 24mm; height: 13.5mm; object-fit: contain; display: block; margin-left: 4mm; }
 
     /* Print calibration offset (mm) for the active layout. */
     .tag-pair, .tail-row { transform: translate(${offX}mm, ${offY}mm); }

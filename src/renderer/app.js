@@ -400,7 +400,21 @@ async function doPrint() {
     }));
   if (items.length === 0) return;
   const offset = state.layoutMode === 'box' ? state.offsets.box : state.offsets.tail;
-  await window.api.print({ items, mode: state.layoutMode, offset });
+  const btn = $('#print-button');
+  const previousText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Saving tag images...';
+  try {
+    const r = await window.api.print({ items, mode: state.layoutMode, offset });
+    if (!r || !r.ok) {
+      const strip = $('#layout-warning');
+      strip.textContent = `Print failed: ${r?.error || 'Unknown error'}`;
+      strip.hidden = false;
+    }
+  } finally {
+    btn.textContent = previousText;
+    updateFooter();
+  }
 }
 
 // ----- Settings -----

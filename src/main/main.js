@@ -11,6 +11,39 @@ let mainWindow;
 
 const ICON_PATH = path.join(__dirname, '..', '..', 'assets', 'logo', 'icon.png');
 
+function timestampForPath(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+}
+
+function tagExportRoot() {
+  try {
+    return path.join(app.getPath('documents'), 'OJ Label Tags');
+  } catch {
+    return path.join(app.getPath('temp'), 'OJ Label Tags');
+  }
+}
+
+function createTagExportDir(mode) {
+  const safeMode = String(mode || 'tags').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '') || 'tags';
+  const dir = path.join(tagExportRoot(), safeMode);
+  fs.mkdirSync(dir, { recursive: true });
+  for (const f of fs.readdirSync(dir)) {
+    if (/^tag-\d+\.png$/i.test(f)) fs.unlinkSync(path.join(dir, f));
+  }
+  return dir;
+}
+
+function writePrintLog(message) {
+  try {
+    const dir = path.join(app.getPath('temp'), 'oj-tags');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.appendFileSync(path.join(dir, 'print.log'), `[${new Date().toISOString()}] ${message}\n`);
+  } catch {
+    // Avoid crashing the main process if diagnostics cannot be written.
+  }
+}
+
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
@@ -120,12 +153,10 @@ async function renderTagPngs(payload) {
     `<style>.toolbar{display:none}.pages{padding:0;margin:0;gap:0}.pages>div{zoom:${ZOOM}}` +
     `::-webkit-scrollbar{width:0;height:0}</style></head>`);
 
-  const dir = path.join(app.getPath('temp'), 'oj-tags');
-  fs.mkdirSync(dir, { recursive: true });
-  for (const f of fs.readdirSync(dir)) {
-    if (f.endsWith('.png') || f === 'list.txt') fs.unlinkSync(path.join(dir, f));
-  }
-  const tmpHtml = path.join(dir, 'tags.html');
+  const dir = createTagExportDir(mode);
+  const tmpDir = path.join(app.getPath('temp'), 'oj-tags-render');
+  fs.mkdirSync(tmpDir, { recursive: true });
+  const tmpHtml = path.join(tmpDir, `tags-${timestampForPath()}.html`);
   fs.writeFileSync(tmpHtml, doc);
 
   // Render off-screen (far off the desktop so it paints but is unseen). The
@@ -133,8 +164,8 @@ async function renderTagPngs(payload) {
   // display height, so pages past the fold capture blank. Instead we scroll
   // each page into the viewport before capturing it.
   const win = new BrowserWindow({
-    x: -20000, y: 0, width: pageWpx, height: pageHpx,
-    show: true, frame: false, skipTaskbar: true,
+    x: 0, y: 0, width: pageWpx, height: pageHpx,
+    show: true, frame: false, skipTaskbar: true, opacity: 0.01,
     webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
   await win.loadFile(tmpHtml);
@@ -143,10 +174,16 @@ async function renderTagPngs(payload) {
   const pngs = [];
   for (let i = 0; i < count; i++) {
     await win.webContents.executeJavaScript(`window.scrollTo(0, ${i * pageHpx});`);
-    await new Promise(r => setTimeout(r, 60)); // let the scrolled region paint
-    const img = await win.webContents.capturePage({ x: 0, y: 0, width: pageWpx, height: pageHpx });
+    let buf = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await new Promise(r => setTimeout(r, attempt === 0 ? 120 : 180)); // let the scrolled region paint
+      const img = await win.webContents.capturePage({ x: 0, y: 0, width: pageWpx, height: pageHpx });
+      buf = img.toPNG();
+      if (buf.length > 0) break;
+    }
+    if (!buf || buf.length === 0) throw new Error(`Could not capture print page ${i + 1}`);
     const p = path.join(dir, `tag-${String(i + 1).padStart(3, '0')}.png`);
-    fs.writeFileSync(p, img.toPNG());
+    fs.writeFileSync(p, buf);
     pngs.push(p);
   }
   win.close();
@@ -181,9 +218,10 @@ using System.Windows.Forms;
 public class OjPrinter {
   public static void Run(string listFile, int w, int h, string printerName) {
     List<string> files = new List<string>(File.ReadAllLines(listFile));
-    files.RemoveAll(s => string.IsNullOrEmpty(s.Trim()));
+    files.RemoveAll(s => string.IsNullOrEmpty(s.Trim()) || !File.Exists(s) || new FileInfo(s).Length == 0);
     if (files.Count == 0) return;
     int idx = 0;
+    Application.EnableVisualStyles();
     PrintDocument doc = new PrintDocument();
     doc.DocumentName = "OJ Labels";
     doc.OriginAtMargins = false;
@@ -201,7 +239,18 @@ public class OjPrinter {
     dlg.Document = doc;
     dlg.AllowSomePages = true;
     dlg.UseEXDialog = true;
-    if (dlg.ShowDialog() == DialogResult.OK) { doc.Print(); }
+    using (Form owner = new Form()) {
+      owner.Text = "OJ Label Printer";
+      owner.StartPosition = FormStartPosition.CenterScreen;
+      owner.Width = 1;
+      owner.Height = 1;
+      owner.ShowInTaskbar = false;
+      owner.TopMost = true;
+      owner.Show();
+      owner.Activate();
+      if (dlg.ShowDialog(owner) == DialogResult.OK) { doc.Print(); }
+      owner.Close();
+    }
   }
 }
 '@
@@ -211,28 +260,65 @@ Add-Type -TypeDefinition $src -ReferencedAssemblies System.Drawing,System.Window
 
 // Hand the PNGs to the OS print path.
 function openImagePrint({ pngs, dir, paperW, paperH }) {
-  if (!pngs.length) return;
-  if (process.platform === 'win32') {
-    const listFile = path.join(dir, 'list.txt');
-    fs.writeFileSync(listFile, pngs.join('\r\n'));
-    const ps1 = path.join(dir, 'print.ps1');
-    fs.writeFileSync(ps1, WINFORMS_PS1);
-    const printer = (config.read().defaultPrinter || '');
-    // -STA is required for WinForms dialogs; -File avoids quoting the inline C#.
-    spawn('powershell.exe',
-      ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', ps1,
-       '-ListFile', listFile, '-W', String(paperW), '-H', String(paperH), '-Printer', printer],
-      { detached: true, stdio: 'ignore' }).unref();
-  } else {
-    shell.openPath(dir); // non-Windows (dev) fallback: open the folder of PNGs
-  }
+  const printablePngs = pngs.filter((p) => {
+    try { return fs.statSync(p).size > 0; } catch { return false; }
+  });
+  if (!printablePngs.length) return;
+  writePrintLog(`Generated ${printablePngs.length} image(s); opening folder ${dir}`);
+  shell.openPath(dir);
+}
+
+async function openHtmlPrintDialog(payload) {
+  const html = await renderPrintHTML(payload);
+  const mode = Array.isArray(payload) ? 'box' : (payload.mode || 'box');
+  const heightMm = (mode === 'tail' || mode === 'tail-rotated') ? 15 : 25;
+  const dir = path.join(app.getPath('temp'), 'oj-tags');
+  fs.mkdirSync(dir, { recursive: true });
+  const tmpPath = path.join(dir, 'tags-print.html');
+  const doc = html
+    .replace(/<div class="toolbar">[\s\S]*?<\/div>\s*/, '')
+    .replace(/<script>[\s\S]*?<\/script>/, '');
+  fs.writeFileSync(tmpPath, doc);
+
+  const win = new BrowserWindow({
+    width: 900,
+    height: 650,
+    parent: mainWindow,
+    title: 'OJ Label Print',
+    icon: ICON_PATH,
+    webPreferences: { contextIsolation: true, nodeIntegration: false },
+  });
+  win.setMenuBarVisibility(false);
+  await win.loadFile(tmpPath);
+
+  return new Promise((resolve) => {
+    win.webContents.print({
+      silent: false,
+      printBackground: true,
+      margins: { marginType: 'none' },
+      pageSize: { width: 100000, height: heightMm * 1000 },
+    }, (success, reason) => {
+      if (!success) writePrintLog(`HTML dialog failed: ${reason || 'unknown reason'}`);
+      setTimeout(() => { if (!win.isDestroyed()) win.close(); }, 250);
+      resolve({ ok: success, reason });
+    });
+  });
 }
 
 ipcMain.handle('print:open', async (_e, payload) => {
   try {
-    const result = await renderTagPngs(payload);
-    openImagePrint(result);
-    return { ok: true, count: result.pngs.length };
+    if (process.platform === 'win32') {
+      try {
+        const result = await renderTagPngs(payload);
+        openImagePrint(result);
+        return { ok: true, count: result.pngs.length, folder: result.dir };
+      } catch (err) {
+        writePrintLog(`PNG path failed; folder was not opened: ${String((err && err.stack) || err)}`);
+        return { ok: false, error: 'Could not generate the tag images. See print.log.' };
+      }
+    }
+    const fallback = await openHtmlPrintDialog(payload);
+    return fallback.ok ? { ok: true } : { ok: false, error: fallback.reason || 'Print dialog failed' };
   } catch (err) {
     return { ok: false, error: String((err && err.message) || err) };
   }
